@@ -17,7 +17,9 @@ sticking to the classics.
 This project was created for the Agile Software Development and DevOps class at
 New York University under professor Amos Bloomberg. I forked this project from
 the class GitHub org in order to refactor the frontend using React Hooks as a way
-to experiment with them. 
+to experiment with them. You can check out the original project written with class
+components
+[here](https://github.com/nyu-software-engineering/drawing-with-friends).
 
 ## Contributing
 See our [guidelines for contributing](./CONTRIBUTING.md) if you would like 
