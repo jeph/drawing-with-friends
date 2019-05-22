@@ -1,65 +1,54 @@
-import * as React from 'react'
+import React, { useState, useEffect } from 'react'
 import Canvas from './Canvas/CanvasWrapper.jsx'
 import '../css/GamePage.css'
 import Chat from './Chat.jsx'
 import { Redirect } from 'react-router-dom'
 import playerComparator from '../utils/PlayersComparator'
 
-export default class GamePage extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      goHome: false,
-      isModalOpen: true,
-      gameState: { players: [], drawer: {} },
-      timerObject: {
-        timeRemaining: 0
-      }
-    }
-    this.closeModal = this.closeModal.bind(this)
-    this.startGame = this.startGame.bind(this)
+export default props => {
+  const [goHome, setGoHome] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(true)
+  const [gameState, setGameState] = useState({ players: [], drawer: {} })
+  const [timeRemaining, setTimeRemaining] = useState(0)
 
-    this.props.socket.on('timer-update', (timeRemaining) => {
-      this.setState({
-        timerObject: {
-          timeRemaining: timeRemaining
-        }
-      })
+  useEffect(() => {
+    props.socket.on('timer-update', (timeRemaining) => {
+      setTimeRemaining(timeRemaining)
     })
 
-    this.props.socket.on('game-update', (gameState) => {
-      this.setState({ gameState })
+    props.socket.on('game-update', (gameState) => {
+      setGameState(gameState)
     })
 
-    this.props.socket.emit('get-game-update')
+    props.socket.emit('get-game-update')
+  }, [])
+
+  const closeModal = () => {
+    setIsModalOpen(false)
   }
 
-  shouldComponentUpdate (_nextProps, nextState) {
-    if (this.state.gameState.isGameOver) {
-      if (nextState.gameState.players.length !== this.state.gameState.players.length) {
-        return false
-      }
-    }
-    return true
+  const startGame = e => {
+    e.preventDefault()
+    props.socket.emit('start-game')
   }
 
-  showModal () {
+  const showModal = () => {
     return (
       <div className='instructionsModal'>
         <div className='instructionsModalContent'>
           <h4>{`What's This?`}</h4>
           <p>This is the staging area where you can wait for your friends to join.</p>
           <p>{`Once the room has three players (including yourself), any one can press "Start Game" to start!`}</p>
-          <button onClick={this.closeModal}>Got it!</button>
+          <button onClick={closeModal}>Got it!</button>
         </div>
       </div>
     )
   }
 
-  renderWinners () {
+  const renderWinners = () => {
     return (
       <ol>
-        {this.state.gameState.players
+        {gameState.players
           .sort(playerComparator)
           .filter((player, index) => index < 3)
           .map((player) => {
@@ -69,80 +58,67 @@ export default class GamePage extends React.Component {
     )
   }
 
-  showWinners () {
+  const showWinners = () => {
     return (
       <div className='instructionsModal'>
         <div className='instructionsModalContent'>
           <h4>{`Game Over!`}</h4>
           <p>Here are the winners:</p>
-          {this.renderWinners()}
-          <button onClick={() => this.setState({ goHome: true })}>Play Again</button>
+          {renderWinners()}
+          <button onClick={() => setGoHome(true)}>Play Again</button>
         </div>
       </div>
     )
   }
 
-  closeModal () {
-    this.setState({
-      isModalOpen: false
-    })
-  }
-
-  startGame (e) {
-    e.preventDefault()
-    this.props.socket.emit('start-game')
-  }
-
-  renderMessageBar () {
-    const { currentWord, drawer, isGameStarted } = this.state.gameState
+  const renderMessageBar = () => {
+    const { currentWord, drawer, isGameStarted } = gameState
     return isGameStarted && drawer
-      ? drawer.playerId === this.props.socket.id
+      ? drawer.playerId === props.socket.id
         ? <h4>You are drawing: {currentWord}</h4>
         : <h4>{drawer.name} is currently drawing</h4>
-      : <h4>Share this code with your friends: {this.props.roomId}</h4>
+      : <h4>Share this code with your friends: {props.roomId}</h4>
   }
 
-  renderDrawerIcon (playerId) {
-    return this.state.gameState.drawer && playerId === this.state.gameState.drawer.playerId ? '🖌️' : ''
+  const renderDrawerIcon = playerId => {
+    return gameState.drawer && playerId === gameState.drawer.playerId ? '🖌️' : ''
   }
 
-  renderPlayers () {
-    return this.state.gameState.players.sort(playerComparator).map((player) => {
-      return this.state.gameState.isGameStarted
-        ? <p key={player.playerId}>{this.renderDrawerIcon(player.playerId)} {player.name}: {player.score}</p>
+  const renderPlayers = () => {
+    return gameState.players.sort(playerComparator).map((player) => {
+      return gameState.isGameStarted
+        ? <p key={player.playerId}>{renderDrawerIcon(player.playerId)} {player.name}: {player.score}</p>
         : <p key={player.playerId}>{player.name}</p>
     })
   }
 
-  renderStartButton () {
-    return !this.state.gameState.isGameStarted ? <button onClick={this.startGame}>Start Game</button> : ''
+  const renderStartButton = () => {
+    return !gameState.isGameStarted ? <button onClick={startGame}>Start Game</button> : ''
   }
 
-  renderTimer () {
-    return this.state.timerObject.timeRemaining > 0 ? `Time Left: ${this.state.timerObject.timeRemaining}` : ''
+  const renderTimer = () => {
+    return timeRemaining > 0 ? `Time Left: ${timeRemaining}` : ''
   }
 
-  render () {
-    return (
-      <>
-        {this.state.isModalOpen ? this.showModal() : ''}
-        {this.state.gameState.isGameOver ? this.showWinners() : ''}
-        {this.state.goHome ? <Redirect to="/"/> : ''}
-        <div className='gamePageContainer'>
-          {this.renderMessageBar()}
-          <div className='canvasContainer'>
-            <Canvas socket={this.props.socket}/>
-          </div>
-          <Chat socket={this.props.socket} playerName={this.props.playerName}/>
-          <div className='playerList'>
-            <div className='playerNames'>
-              {this.renderPlayers()}
-            </div>
-            {this.renderStartButton()}
-          </div>
-          <h4>{this.renderTimer()}</h4>
+  return (
+    <>
+      {isModalOpen ? showModal() : ''}
+      {gameState.isGameOver ? showWinners() : ''}
+      {goHome ? <Redirect to="/"/> : ''}
+      <div className='gamePageContainer'>
+        {renderMessageBar()}
+        <div className='canvasContainer'>
+          <Canvas socket={props.socket}/>
         </div>
-      </>
-    )
-  }
+        <Chat socket={props.socket} playerName={props.playerName}/>
+        <div className='playerList'>
+          <div className='playerNames'>
+            {renderPlayers()}
+          </div>
+          {renderStartButton()}
+        </div>
+        <h4>{renderTimer()}</h4>
+      </div>
+    </>
+  )
 }

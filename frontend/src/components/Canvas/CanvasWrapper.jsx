@@ -1,25 +1,14 @@
-import * as React from 'react'
+import React, { useEffect } from 'react'
 import P5 from 'p5'
 import canvas from './DrawingCanvas.js'
 
-class CanvasWrapper extends React.Component {
-  componentDidMount () {
-    this.canvas = new P5(canvas(this.props.socket), 'canvas')
-  }
+export default React.memo((props) => {
+  useEffect(() => {
+    const newCanvas = new P5(canvas(props.socket), 'canvas')
+    return () => newCanvas.remove()
+  }, [])
 
-  shouldComponentUpdate () { // just in case
-    return false
-  }
-
-  componentWillUnmount () {
-    this.canvas.remove()
-  }
-
-  render () {
-    return (
-      <div id="canvas"/>
-    )
-  }
-}
-
-export default CanvasWrapper
+  return (
+    <div id="canvas"/>
+  )
+}, () => true)
