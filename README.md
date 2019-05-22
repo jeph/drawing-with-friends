@@ -13,6 +13,12 @@ and Overcooked are becoming increasingly trendy. We were inspired by the
 rise of these games and wanted to rebuild our own from scratch while 
 sticking to the classics.
 
+## Why the fork?
+This project was created for the Agile Software Development and DevOps class at
+New York University under professor Amos Bloomberg. I forked this project from
+the class GitHub org in order to refactor the frontend using React Hooks as a way
+to experiment with them. 
+
 ## Contributing
 See our [guidelines for contributing](./CONTRIBUTING.md) if you would like 
 to add something to our project.
