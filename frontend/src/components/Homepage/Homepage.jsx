@@ -4,14 +4,12 @@ import Instructions from './Instructions.jsx'
 import AboutUs from './AboutUs.jsx'
 import '../../css/Homepage.css'
 
-export default class Homepage extends React.Component {
-  render () {
-    return (
-      <div className='homepageContainer'>
-        <Greeting/>
-        <Instructions/>
-        <AboutUs/>
-      </div>
-    )
-  }
+export default function homepage () {
+  return (
+    <div className='homepageContainer'>
+      <Greeting/>
+      <Instructions/>
+      <AboutUs/>
+    </div>
+  )
 }
