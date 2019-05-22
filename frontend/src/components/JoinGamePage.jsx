@@ -1,59 +1,50 @@
-import * as React from 'react'
+import React, { useState, useEffect } from 'react'
 import '../css/JoinGamePage.css'
 import GamePage from './GamePage.jsx'
 import socketConnect from '../utils/SocketConnect'
+const socket = socketConnect()
 
-class JoinGame extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      validRoomCode: false,
-      incorrectRoomEntered: false,
-      roomId: '',
-      name: ''
-    }
+export default () => {
+  const [validRoomCode, setValidRoomCode] = useState(false)
+  const [incorrectRoomEntered, setIncorrectRoomEntered] = useState(false)
+  const [formState, setFormState] = useState({ roomId: '', name: '' })
 
-    this.socket = socketConnect()
-    this.socket.on('room-does-not-exist', () => {
-      this.setState({ validRoomCode: false, incorrectRoomEntered: true })
+  useEffect(() => {
+    socket.on('room-does-not-exist', () => {
+      setValidRoomCode(false)
+      setIncorrectRoomEntered(true)
     })
 
-    this.socket.on('confirm-valid-room-code', () => {
-      this.setState({ validRoomCode: true })
+    socket.on('confirm-valid-room-code', () => {
+      setValidRoomCode({ validRoomCode: true })
     })
+
+    return () => { socket.disconnect() }
+  }, [])
+
+  const handleChange = (e) => {
+    setFormState({ ...formState, [e.target.name]: e.target.value.trim() })
   }
 
-  componentWillUnmount () {
-    this.socket.disconnect()
-  }
-
-  handleChange (e) {
-    this.setState({ [e.target.name]: e.target.value.trim() })
-  }
-
-  handleSubmit (e) {
+  const handleSubmit = (e) => {
     e.preventDefault()
-    this.socket.emit('join-room', { roomId: this.state.roomId, name: this.state.name })
+    socket.emit('join-room', { roomId: formState.roomId, name: formState.name })
   }
 
-  render () {
-    if (this.state.validRoomCode) {
-      return <GamePage roomId={this.state.roomId} socket={this.socket} playerName={this.state.name}/>
-    }
-
-    return (
-      <div className='joinGameContainer'>
-        <form onSubmit={this.handleSubmit.bind(this)}>
-          {this.state.incorrectRoomEntered
-            ? <p>Invalid room code Entered. Please double check and try again</p>
-            : <p>Enter your room code below</p>}
-          <input name="name" type='text' placeholder='Enter your name' onChange={this.handleChange.bind(this)}/>
-          <input name="roomId" type='text' placeholder='Enter room code' onChange={this.handleChange.bind(this)}/>
-          <input type="submit" value="Join" disabled={!this.state.name || !this.state.roomId}/>
-        </form>
-      </div>
-    )
+  if (validRoomCode) {
+    return <GamePage roomId={formState.roomId} socket={socket} playerName={formState.name}/>
   }
+
+  return (
+    <div className='joinGameContainer'>
+      <form onSubmit={handleSubmit}>
+        {incorrectRoomEntered
+          ? <p>Invalid room code Entered. Please double check and try again</p>
+          : <p>Enter your room code below</p>}
+        <input name="name" type='text' placeholder='Enter your name' onChange={handleChange}/>
+        <input name="roomId" type='text' placeholder='Enter room code' onChange={handleChange}/>
+        <input type="submit" value="Join" disabled={!formState.name || !formState.roomId}/>
+      </form>
+    </div>
+  )
 }
-
-export default JoinGame
